@@ -1,49 +1,58 @@
-# RoadRover: Plataforma de Alquiler de Coches Inteligente
+# Plataforma de Alquiler de Coches Inteligente
 
-RoadRover es una aplicación web y móvil que revoluciona la experiencia de alquiler de vehículos, permitiendo a los usuarios encontrar, reservar y gestionar alquileres de coches de manera rápida, segura y completamente personalizada.
+es una aplicación web y móvil que revoluciona la experiencia de alquiler de vehículos, permitiendo a los usuarios encontrar, reservar y gestionar alquileres de coches de manera rápida, segura y completamente personalizada.
 
 ## Características principales
 
 - Búsqueda de vehículos por ubicación y fecha
 - Filtrado avanzado por tipo de vehículo, precio y características
 - Reservas instantáneas con confirmación inmediata
-- Sistema de valoraciones y reseñas de vehículos
-- Gestión de documentación digital
-- Soporte 24/7 para usuarios
 
 ### Tecnologías utilizadas
 
 | Componente | Tecnología |
 |------------|------------|
-| Frontend   | React.js |
-| Backend    | Node.js + Express |
-| Base de datos | PostgreSQL |
-| Autenticación | JWT |
-| Pagos | Stripe |
+| Frontend   | html/css |
+| Backend    | PHP |
+| Base de datos | MySQL |
+| Autenticación | PHP Sessions |
 
-Para más información sobre tendencias en alquiler de vehículos, visita [Automotive Rental Trends](https://www.rentalsource.com/)
+link pagina web[Automotive Rental Trends](https://www.alquilerdecoches.com/)
 
-![RoadRover Logo](https://example.com/roadrover-logo.png)
+![RoadRover Logo](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Database-mysql.svg/724px-Database-mysql.svg.png)
 
 ## Ejemplo de código: Función de reserva de vehículo
 
-```javascript
-async function bookVehicle(userId, vehicleId, startDate, endDate) {
-  try {
-    const vehicle = await Vehicle.findById(vehicleId);
-    const totalPrice = calculateRentalPrice(vehicle, startDate, endDate);
+```php
+<?php
+function bookVehicle($userId, $vehicleId, $startDate, $endDate) {
+    global $conn;
     
-    const booking = new Booking({
-      userId,
-      vehicleId,
-      startDate,
-      endDate,
-      totalPrice
-    });
-
-    await booking.save();
-    return booking;
-  } catch (error) {
-    throw new Error('Error en la reserva');
-  }
+    try {
+        // Obtener información del vehículo
+        $stmt = $conn->prepare("SELECT * FROM vehicles WHERE id = ?");
+        $stmt->bind_param("i", $vehicleId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $vehicle = $result->fetch_assoc();
+        
+        // Calcular precio total
+        $totalPrice = calculateRentalPrice($vehicle, $startDate, $endDate);
+        
+        // Insertar reserva en la base de datos
+        $stmt = $conn->prepare("INSERT INTO bookings (user_id, vehicle_id, start_date, end_date, total_price) VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("iissd", $userId, $vehicleId, $startDate, $endDate, $totalPrice);
+        $stmt->execute();
+        
+        $bookingId = $stmt->insert_id;
+        
+        return [
+            'booking_id' => $bookingId,
+            'total_price' => $totalPrice
+        ];
+    } catch (Exception $e) {
+        throw new Exception('Error en la reserva: ' . $e->getMessage());
+    }
 }
+?>
+
